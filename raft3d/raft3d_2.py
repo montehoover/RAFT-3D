@@ -153,12 +153,12 @@ class RAFT3D(nn.Module):
 
 
         # intrinsics and depth at 1/8 resolution
-        intrinsics_r8 = intrinsics / 8.0
-        depth1_r8 = depth1[:,3::8,3::8]
-        depth2_r8 = depth2[:,3::8,3::8]
-        intrinsics_r8 = intrinsics / 8.0
-        depth1_r8 = depth1[:,3::8,3::8]
-        depth2_r8 = depth2[:,3::8,3::8]
+        intrinsics_r8_1 = intrinsics_1 / 8.0
+        depth1_r8_1 = depth1_1[:,3::8,3::8]
+        depth2_r8_1 = depth2_1[:,3::8,3::8]
+        intrinsics_r8_2 = intrinsics_2 / 8.0
+        depth1_r8_2 = depth1_2[:,3::8,3::8]
+        depth2_r8_2 = depth2_2[:,3::8,3::8]
 
         flow_est_list = []
         flow_rev_list = []
