@@ -9,3 +9,5 @@ datasets
 runs
 a.out
 kitti_submission
+
+.venv
