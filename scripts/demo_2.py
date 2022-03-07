@@ -20,10 +20,15 @@ DEPTH_SCALE = 0.2
 def prepare_images_and_depths(image1, image2, depth1, depth2):
     """ padding, normalization, and scaling """
 
-    image1 = F.pad(image1, [0,0,0,4], mode='replicate')
-    image2 = F.pad(image2, [0,0,0,4], mode='replicate')
-    depth1 = F.pad(depth1[:,None], [0,0,0,4], mode='replicate')[:,0]
-    depth2 = F.pad(depth2[:,None], [0,0,0,4], mode='replicate')[:,0]
+    # assert image1.shape == image2.shape and image1.shape == depth1.shape and image1.shape == depth2.shape, \
+    #     "All RGB and depth images must have matching dimensions."
+    batch_size, ch, ht, wd = image1.shape
+    pad = ht % 8 
+
+    image1 = F.pad(image1, [0,0,0,pad], mode='replicate')
+    image2 = F.pad(image2, [0,0,0,pad], mode='replicate')
+    depth1 = F.pad(depth1[:,None], [0,0,0,pad], mode='replicate')[:,0]
+    depth2 = F.pad(depth2[:,None], [0,0,0,pad], mode='replicate')[:,0]
 
     depth1 = (DEPTH_SCALE * depth1).float()
     depth2 = (DEPTH_SCALE * depth2).float()
@@ -46,6 +51,23 @@ def display(img, tau, phi):
 
     ax2.imshow(tau_img)
     ax3.imshow(phi_img)
+    plt.show()
+
+def display2(img1, img2, tau, phi):
+    """ display se3 fields """
+    fig, axs = plt.subplots(2,2)
+    axs[0, 0].imshow(img1[:, :, ::-1] / 255.0)
+    axs[0, 1].imshow(img2[:, :, ::-1] / 255.0)
+
+
+    tau_img = np.clip(tau, -0.1, 0.1)
+    tau_img = (tau_img + 0.1) / 0.2
+
+    phi_img = np.clip(phi, -0.1, 0.1)
+    phi_img = (phi_img + 0.1) / 0.2
+
+    axs[1, 0].imshow(tau_img)
+    axs[1, 1].imshow(phi_img)
     plt.show()
 
 
@@ -90,12 +112,13 @@ def demo(args):
 
     image1_2, image2_2, depth1_2, depth2_2 = prepare_images_and_depths(image1, image2, depth1, depth2)
 
-    # Ts = model(image1, image2, depth1, depth2, intrinsics, iters=16)
-    Ts = model(image1_1, image2_1, depth1_1, depth2_1, intrinsics_1, image1_2, image2_2, depth1_2, depth2_2, intrinsics_2, iters=16)
+    # Ts = model(image1_1, image2_1, depth1_1, depth2_1, intrinsics_1, image1_2, image2_2, depth1_2, depth2_2, intrinsics_2, iters=16)
+    Ts_1 = model(image1_1, image2_1, depth1_1, depth2_1, intrinsics_1, iters=16)
+    Ts_2 = model(image1_2, image2_2, depth1_2, depth2_2, intrinsics_2, iters=16)
 
     
     # compute 2d and 3d from from SE3 field (Ts)
-    flow2d, flow3d, _ = pops.induced_flow(Ts, depth1, intrinsics)
+    flow2d, flow3d, _ = pops.induced_flow(Ts, depth1_2, intrinsics_2)
 
     # extract rotational and translational components of Ts
     tau, phi = Ts.log().split([3,3], dim=-1)
@@ -105,7 +128,7 @@ def demo(args):
     # undo depth scaling
     flow3d = flow3d / DEPTH_SCALE
 
-    display(img1, tau, phi)
+    display2(img1, img2, tau, phi)
 
 
 if __name__ == '__main__':
