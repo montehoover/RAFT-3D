@@ -1,0 +1,1 @@
+python scripts/demo.py --network=raft3d.raft3d --model=raft3d.pth
