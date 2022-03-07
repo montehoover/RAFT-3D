@@ -83,9 +83,9 @@ def demo(args):
 
     fx, fy, cx, cy = (1050.0, 1050.0, 480.0, 270.0)
     img1 = cv2.imread('assets/image1.png')
-    img2 = cv2.imread('assets/image2.png')
+    img2 = cv2.imread('assets/image1.png')
     disp1 = frame_utils.read_gen('assets/disp1.pfm')
-    disp2 = frame_utils.read_gen('assets/disp2.pfm')
+    disp2 = frame_utils.read_gen('assets/disp1.pfm')
 
     depth1 = torch.from_numpy(fx / disp1).float().cuda().unsqueeze(0)
     depth2 = torch.from_numpy(fx / disp2).float().cuda().unsqueeze(0)
@@ -98,11 +98,11 @@ def demo(args):
 
     fx, fy, cx, cy = (5.745410000000000537e+02, 5.775839999999999463e+02, 3.225230000000000246e+02, 2.385589999999999975e+02)
     img1 = cv2.imread('assets/deepdeform/train/seq070/color/000000.jpg')
-    img2 = cv2.imread('assets/deepdeform/train/seq070/color/000030.jpg')
+    img2 = cv2.imread('assets/deepdeform/train/seq070/color/000036.jpg')
     disp1 = cv2.imread('assets/deepdeform/train/seq070/depth/000000.png', cv2.IMREAD_UNCHANGED)
-    disp2 = cv2.imread('assets/deepdeform/train/seq070/depth/000030.png', cv2.IMREAD_UNCHANGED)
+    disp2 = cv2.imread('assets/deepdeform/train/seq070/depth/000036.png', cv2.IMREAD_UNCHANGED)
     disp1 = np.where(disp1 == 0, disp1.max(), disp1)
-    disp1 = np.where(disp2 == 0, disp2.max(), disp2)
+    disp2 = np.where(disp2 == 0, disp2.max(), disp2)
 
     depth1 = torch.from_numpy(fx / disp1).float().cuda().unsqueeze(0)
     depth2 = torch.from_numpy(fx / disp2).float().cuda().unsqueeze(0)
@@ -118,17 +118,24 @@ def demo(args):
 
     
     # compute 2d and 3d from from SE3 field (Ts)
-    flow2d, flow3d, _ = pops.induced_flow(Ts, depth1_2, intrinsics_2)
+    # flow2d_1, flow3d_1, _ = pops.induced_flow(Ts_1, depth1_1, intrinsics_1)
+    # flow2d_2, flow3d_2, _ = pops.induced_flow(Ts_2, depth1_2, intrinsics_2)
 
     # extract rotational and translational components of Ts
-    tau, phi = Ts.log().split([3,3], dim=-1)
-    tau = tau[0].cpu().numpy()
-    phi = phi[0].cpu().numpy()
+    # tau, phi = Ts_1.log().split([3,3], dim=-1)
+    # tau = tau[0].cpu().numpy()
+    # phi = phi[0].cpu().numpy()
+
+    tau_2, phi_2 = Ts_2.log().split([3,3], dim=-1)
+    tau_2 = tau_2[0].cpu().numpy()
+    phi_2 = phi_2[0].cpu().numpy()
 
     # undo depth scaling
-    flow3d = flow3d / DEPTH_SCALE
+    # flow3d_1 = flow3d_1 / DEPTH_SCALE
+    # flow3d_2 = flow3d_2 / DEPTH_SCALE
 
-    display2(img1, img2, tau, phi)
+    # display2(img1, img2, tau, phi)
+    display2(img1, img2, tau_2, phi_2)
 
 
 if __name__ == '__main__':

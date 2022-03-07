@@ -13,8 +13,7 @@ class SE3BuilderInplace(torch.autograd.Function):
         ctx.radius = radius
         ctx.save_for_backward(se3, ae, pts, target, weight, intrinsics)
         
-        H, b = lietorch_extras.se3_build_inplace(
-            se3, ae, pts, target, weight, intrinsics, radius)
+        H, b = lietorch_extras.se3_build_inplace(se3, ae, pts, target, weight, intrinsics, radius)
         
         return H, b
 

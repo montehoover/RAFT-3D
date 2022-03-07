@@ -61,9 +61,9 @@ def demo(args):
 
     fx, fy, cx, cy = (1050.0, 1050.0, 480.0, 270.0)
     img1 = cv2.imread('assets/image1.png')
-    img2 = cv2.imread('assets/image2.png')
+    img2 = cv2.imread('assets/image1.png')
     disp1 = frame_utils.read_gen('assets/disp1.pfm')
-    disp2 = frame_utils.read_gen('assets/disp2.pfm')
+    disp2 = frame_utils.read_gen('assets/disp1.pfm')
 
     depth1 = torch.from_numpy(fx / disp1).float().cuda().unsqueeze(0)
     depth2 = torch.from_numpy(fx / disp2).float().cuda().unsqueeze(0)
