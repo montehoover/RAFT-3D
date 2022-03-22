@@ -83,9 +83,9 @@ def demo(args):
 
     fx, fy, cx, cy = (1050.0, 1050.0, 480.0, 270.0)
     img1 = cv2.imread('assets/image1.png')
-    img2 = cv2.imread('assets/image1.png')
+    img2 = cv2.imread('assets/image2.png')
     disp1 = frame_utils.read_gen('assets/disp1.pfm')
-    disp2 = frame_utils.read_gen('assets/disp1.pfm')
+    disp2 = frame_utils.read_gen('assets/disp2.pfm')
 
     depth1 = torch.from_numpy(fx / disp1).float().cuda().unsqueeze(0)
     depth2 = torch.from_numpy(fx / disp2).float().cuda().unsqueeze(0)
@@ -94,23 +94,40 @@ def demo(args):
     intrinsics_1 = torch.as_tensor([fx, fy, cx, cy]).cuda().unsqueeze(0)
 
     image1_1, image2_1, depth1_1, depth2_1 = prepare_images_and_depths(image1, image2, depth1, depth2)
-
-
+        
+    fig, axs = plt.subplots(2, 3)
+    im0 = axs[0, 0].imshow(disp1)
+    plt.colorbar(im0, ax=axs[0, 0])
+    im1 = axs[0, 1].imshow(depth1.cpu().squeeze())
+    plt.colorbar(im1, ax=axs[0, 1])
+    im2 = axs[0, 2].imshow(depth1_1.cpu().squeeze())
+    plt.colorbar(im2, ax=axs[0, 2])
+    
     fx, fy, cx, cy = (5.745410000000000537e+02, 5.775839999999999463e+02, 3.225230000000000246e+02, 2.385589999999999975e+02)
-    img1 = cv2.imread('assets/deepdeform/train/seq070/color/000000.jpg')
-    img2 = cv2.imread('assets/deepdeform/train/seq070/color/000036.jpg')
-    disp1 = cv2.imread('assets/deepdeform/train/seq070/depth/000000.png', cv2.IMREAD_UNCHANGED)
-    disp2 = cv2.imread('assets/deepdeform/train/seq070/depth/000036.png', cv2.IMREAD_UNCHANGED)
-    disp1 = np.where(disp1 == 0, disp1.max(), disp1)
-    disp2 = np.where(disp2 == 0, disp2.max(), disp2)
+    img1 = cv2.imread('assets/deepdeform/train/seq070/color/000036.jpg')
+    img2 = cv2.imread('assets/deepdeform/train/seq070/color/000000.jpg')
+    disp1 = cv2.imread('assets/deepdeform/train/seq070/depth/000036.png', cv2.IMREAD_UNCHANGED)
+    disp2 = cv2.imread('assets/deepdeform/train/seq070/depth/000000.png', cv2.IMREAD_UNCHANGED)
+    disp1 = np.where(disp1 == 0, disp1.mean(), disp1)
+    disp2 = np.where(disp2 == 0, disp2.mean(), disp2)
 
-    depth1 = torch.from_numpy(fx / disp1).float().cuda().unsqueeze(0)
-    depth2 = torch.from_numpy(fx / disp2).float().cuda().unsqueeze(0)
+    depth1 = torch.from_numpy(1/4 * disp1).float().cuda().unsqueeze(0)
+    depth2 = torch.from_numpy(1/4 * disp2).float().cuda().unsqueeze(0)
     image1 = torch.from_numpy(img1).permute(2,0,1).float().cuda().unsqueeze(0)
     image2 = torch.from_numpy(img2).permute(2,0,1).float().cuda().unsqueeze(0)
     intrinsics_2 = torch.as_tensor([fx, fy, cx, cy]).cuda().unsqueeze(0)
 
     image1_2, image2_2, depth1_2, depth2_2 = prepare_images_and_depths(image1, image2, depth1, depth2)
+
+    print(disp1.min(), disp1.max(), disp1.mean())
+
+    im0 = axs[1, 0].imshow(disp1)
+    plt.colorbar(im0, ax=axs[1, 0])
+    im1 = axs[1, 1].imshow(depth1.cpu().squeeze())
+    plt.colorbar(im1, ax=axs[1, 1])
+    im2 = axs[1, 2].imshow(depth1_2.cpu().squeeze())
+    plt.colorbar(im2, ax=axs[1, 2])
+    # plt.show()
 
     # Ts = model(image1_1, image2_1, depth1_1, depth2_1, intrinsics_1, image1_2, image2_2, depth1_2, depth2_2, intrinsics_2, iters=16)
     Ts_1 = model(image1_1, image2_1, depth1_1, depth2_1, intrinsics_1, iters=16)

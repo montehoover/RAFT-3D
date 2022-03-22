@@ -25,7 +25,7 @@
                 "--network=raft3d.raft3d",
                 "--model=raft3d.pth"
             ],
-            "justMyCode": false
+            // "justMyCode": false
         }
     ]
 }
