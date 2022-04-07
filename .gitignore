@@ -12,3 +12,4 @@ kitti_submission
 
 .venv
 assets/deepdeform
+assets/kinect
