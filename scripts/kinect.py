@@ -97,12 +97,12 @@ def demo(args):
     fx, fy, cx, cy = (503.291, 503.44, 320.279, 335.41)
     intrinsics = torch.as_tensor([fx, fy, cx, cy]).cuda().unsqueeze(0)
 
-    img_nums = ['315', '330', '345', '360', '375', '390', '405', '420', '435']
+    img_nums = ['400', '401', '402', '403', '404', '405', '406', '407', '408']
+    # img_nums = ['200', '201', '202', '203', '204', '205', '206', '207', '208']
     img_jpgs = []
     imgs = []
     depths = []
     for img_num in img_nums:
-        print(f"Calculating SE3 motion for image {img_num}...")
         img_jpg = cv2.imread(f'assets/kinect/puma_narrow_fov/color/{img_num}.jpg')
         img = torch.from_numpy(img_jpg).permute(2,0,1).float().cuda().unsqueeze(0)
         depth = cv2.imread(f'assets/kinect/puma_narrow_fov/depth/{img_num}.png', cv2.IMREAD_UNCHANGED)
@@ -117,6 +117,7 @@ def demo(args):
     taus = []
     phis = []
     for i in range(len(imgs) - 1):
+        print(f"Calculating SE3 motion for image {i+1}...")
         T = model(imgs[i], imgs[i+1], depths[i], depths[i+1], intrinsics, iters=16)
         tau, phi = T.log().split([3,3], dim=-1)
         tau = tau[0].cpu().numpy()
