@@ -88,6 +88,7 @@ class BasicUpdateBlock(nn.Module):
         mot = self.flow_enc(motion_info)
         cor = self.corr_enc(corr)
 
+        # net is the hidden state
         net = self.gru(net, inp, cor, mot)
 
         ae = self.ae(net)
@@ -95,6 +96,7 @@ class BasicUpdateBlock(nn.Module):
         delta = self.delta(net)
         weight = self.weight(net)
 
+        # Return: hidden state (net), _, affinity embedding map V (ae), revision map rx,ry,rz (delta), and confidence maps wx,wy,wz (weight)
         return net, mask, ae, delta, weight
 
 
@@ -158,23 +160,47 @@ class RAFT3D(nn.Module):
         for itr in range(iters):
             Ts = Ts.detach()
 
+            # Transformed prediction for x,y,d
+            # This is really x,y,d, with x,y being image plane space (or u,v) and d = 1 / z
+            # so z here is zinv because it is built into pops.projective_transform()
             coords1_xyz, _ = pops.projective_transform(Ts, depth1_r8, intrinsics_r8)
             
+            # Predicted 2D correspondences x,y and predicted depths
+            # x' in section 3.2 of the paper is coords1
+            # d' in section 3.2 of the paper is zinv_proj
             coords1, zinv_proj = coords1_xyz.split([2,1], dim=-1)
+            # The depths from frame 2 corresponding to the predicted x,y correspondences.
+            # We can compare the directly predicted depths with the depth associated with predicted x,y to get a partial data term. For example,
+            # if the prediction for x,y (x') and d (d') is exactly correct, the depth in frame 2 (d-') associated with x' will exactly match d'.
+            # The data term (d' - d-') tells us how close we are in general but doesn't tell us how close in any dimension. That is probably okay.
+            # d-' ("d bar prime") in section 3.2 of the paper is zinv
             zinv, _ = depth_sampler(1.0/depth2_r8, coords1)
 
+            # Correlation features extracted from the neighborhood of the correlation volume
+            # L_C(x') in section 3.2 of the paper is corr
             corr = corr_fn(coords1.permute(0,3,1,2).contiguous())
+            # Predicted 2D optical flow
+            # (x' - x) in section 3.2 of the paper is flow
             flow = coords1 - coords0
 
+            # Depth residual data term (note: in the paper they have d' - d-' but here it is reversed. Doesn't make any difference.)
+            # (d-' - d') in section 3.2 of the paper is dz
             dz = zinv.unsqueeze(-1) - zinv_proj
+            # Twist field log_SE3(T)
             twist = Ts.log()
 
+
+            # GRU inputs: net->hidden state (initialized from context resnet), inp->context features (static features from context resnet), corr->correlation features, flow/dz/twist->predicted motion features
+            # GRU outputs: net->hidden state, mask->? (used for upsampling back to full resolution), ae->affinities, delta->revision map, weight->weights (confidences)
             net, mask, ae, delta, weight = \
                 self.update_block(net, inp, corr, flow, dz, twist)
 
+            # Predicted x,y,d updated by revision map
+            # target is r+pi(TX) from equation 16 in section 3.3
             target = coords1_xyz.permute(0,3,1,2) + delta
             target = target.contiguous()
 
+            # step_inplace performs the following equations: 16, 15, 7-10, and T'=exp(deltax-hat)*T
             # Gauss-Newton step
             # Ts = se3_field.step(Ts, ae, target, weight, depth1_r8, intrinsics_r8)
             Ts = se3_field.step_inplace(Ts, ae, target, weight, depth1_r8, intrinsics_r8)
