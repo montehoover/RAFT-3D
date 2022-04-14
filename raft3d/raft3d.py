@@ -14,6 +14,7 @@ from .sampler_ops import bilinear_sampler, depth_sampler
 from . import projective_ops as pops
 from . import se3_field
 
+import point_cloud_utils as pcu
 
 GRAD_CLIP = .01
 
@@ -189,6 +190,17 @@ class RAFT3D(nn.Module):
             # Twist field log_SE3(T)
             twist = Ts.log()
 
+            # Add Chamfer distance data term here for comparison:
+            X1 = pops.inv_project(depth1_r8, intrinsics_r8)
+            X2 = pops.inv_project(depth2_r8, intrinsics_r8)
+            X2_pred  = Ts * X1
+            X2 = X2.squeeze()
+            flat_dims = X2.shape[0] * X2.shape[1], 3
+            X2 = X2.cpu().numpy().reshape(*flat_dims)
+            X2_pred = X2_pred.cpu().numpy().reshape(*flat_dims)
+            chamf = pcu.chamfer_distance(X2, X2_pred)
+            print(f"Chamfer distance at iteration {itr+1}: {chamf:4E}")
+            print(f"Summed depth residuals at iteration {itr+1}: {torch.sum(abs(dz)):4E}")
 
             # GRU inputs: net->hidden state (initialized from context resnet), inp->context features (static features from context resnet), corr->correlation features, flow/dz/twist->predicted motion features
             # GRU outputs: net->hidden state, mask->? (used for upsampling back to full resolution), ae->affinities, delta->revision map, weight->weights (confidences)
