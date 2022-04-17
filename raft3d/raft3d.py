@@ -158,6 +158,9 @@ class RAFT3D(nn.Module):
         flow_est_list = []
         flow_rev_list = []
 
+        print("Iteration metrics:")
+        print("              Chamfer:       | Depth residual: ")
+        print("              --------------- -----------------")
         for itr in range(iters):
             Ts = Ts.detach()
 
@@ -199,7 +202,6 @@ class RAFT3D(nn.Module):
             X2 = X2.cpu().numpy().reshape(*flat_dims)
             X2_pred = X2_pred.cpu().numpy().reshape(*flat_dims)
             chamf = pcu.chamfer_distance(X2, X2_pred)
-            print(f"              Chamfer: | Depth residual: ")
             print(f"Iteration {itr+1:2}: {chamf:4E}   | {torch.sum(abs(dz)):4E}")
 
             # GRU inputs: net->hidden state (initialized from context resnet), inp->context features (static features from context resnet), corr->correlation features, flow/dz/twist->predicted motion features
