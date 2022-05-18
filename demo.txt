@@ -1,7 +1,10 @@
 Ensure cuda 11.3 is installed
-
 pip install -r requirements.txt
-
 gdown https://drive.google.com/uc?id=1Lt14WdzPQIjaOqVLbvNBqdDLtN9wtxbs
+python scripts/demo.py --network=raft3d.raft3d --model=raft3d.pth
 
+--- or ---
+
+docker build -t raft3d .
+docker run -it raft3d
 python scripts/demo.py --network=raft3d.raft3d --model=raft3d.pth
