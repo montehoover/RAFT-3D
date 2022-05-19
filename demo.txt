@@ -6,5 +6,5 @@ python scripts/demo.py --network=raft3d.raft3d --model=raft3d.pth
 --- or ---
 
 docker build -t raft3d .
-docker run -it raft3d
+docker run -it --rm --gpus=all -v "$(pwd):/RAFT-3D" raft3d
 python scripts/demo.py --network=raft3d.raft3d --model=raft3d.pth
