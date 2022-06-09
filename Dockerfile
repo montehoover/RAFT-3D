@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y \
         python-is-python3 \
     && rm -rf /var/lib/apt/lists/*
 
+# ---- Everything above this line sets up a clean py38-cuda11.3 image setup like an empty pip venv -------
+
 # Only needed for running GUI apps from the container.
 RUN apt-get update && apt-get install -y \
         xauth \
@@ -27,10 +29,21 @@ RUN apt-get update && apt-get install -y \
 
 # Install pip requirements. Note this is done in two stages because lietorch in
 # requirements2.txt requires torch to already be installed.
+# Also apt install ninja-build because it speeds up building the lietorch wheel.
+RUN apt-get update && apt-get install -y \
+        ninja-build \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY ./requirements.txt ./requirements2.txt ./
 RUN pip install -r requirements.txt && \ 
     pip install -r requirements2.txt && \
     rm requirements.txt requirements2.txt
+
+# Delete ninja-build because it was only needed to make the above step go faster.
+RUN apt-get remove -y ninja-build 
+
+# Create RAFT-3D directory and cd into it for future commands and for container startup
+WORKDIR /RAFT-3D
 
 # Download RAFT-3D pretrained model
 RUN gdown https://drive.google.com/uc?id=1Lt14WdzPQIjaOqVLbvNBqdDLtN9wtxbs
